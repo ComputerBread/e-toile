@@ -8,3 +8,5 @@ clone, for fun & because I can!
 ## tech
 
 react + js
+
+bun run dev
