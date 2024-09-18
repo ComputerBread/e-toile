@@ -4,3 +4,7 @@
 
 doing a [dingboard](https://dingboard.com) or [canvasdesu](https://canvasdesu.com)
 clone, for fun & because I can!
+
+## tech
+
+react + js
