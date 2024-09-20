@@ -31,6 +31,10 @@ function redrawCanvas() {
     ctx.lineTo(line.endX, line.endY);
     ctx.stroke();
   });
+
+  images.forEach(({img, x, y }) => {
+    ctx.drawImage(img, x, y);
+  })
   
   ctx.restore();  // Restore the original state
 }
@@ -65,14 +69,24 @@ canvas.addEventListener('mousemove', (e) => {
   }
 
   lines.push(newLine);
-  
+  ctx.save(); 
   ctx.beginPath();      // Start a new path
+
+  if (eraserMode) {
+    ctx.globalCompositeOperation = 'destination-out'; // Set to erase
+    ctx.lineWidth = 40;   // Set the line width
+  } else {
+    ctx.globalCompositeOperation = 'source-over'; // Set to draw
+    ctx.lineWidth = 2;   // Set the line width
+    ctx.strokeStyle = 'red';  // Set the line color to red
+  }
+
   ctx.moveTo(lastX, lastY);  // Move to the last recorded mouse position
   ctx.lineTo(e.offsetX, e.offsetY);  // Draw a line to the current mouse position
-  ctx.strokeStyle = 'red';  // Set the line color to red
-  ctx.lineWidth = 2;   // Set the line width
   ctx.stroke();        // Actually draw the line
   ctx.closePath();
+
+  ctx.restore();
 
   // Update lastX and lastY to the current position
   [lastX, lastY] = [e.offsetX, e.offsetY];
@@ -91,23 +105,30 @@ canvas.addEventListener('wheel', (e) => {
   redrawCanvas();
 });
 
-/*
 const images = [];
-const handleImageDrop = (e) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        images.push({})
-        setImages([...images, { element: img, x: 0, y: 0 }]);
-      };
-      img.src = event.target.result;
+canvas.addEventListener("drop", (e) => {
+  e.preventDefault();
+  console.log("dropped")
+  const file = e.dataTransfer.files[0];
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const img = new Image();
+    const x = e.clientX; // exists on this e?
+    const y = e.clientY;
+    img.src = event.target.result;
+    img.onload = () => {
+      images.push({ img, x, y: y-scrollOffsetY });
+      ctx.drawImage(img, x, y);
     };
-    reader.readAsDataURL(file);
-}
-*/
+  };
+  reader.readAsDataURL(file);
+});
+
+canvas.addEventListener("dragover", (e) => {
+  e.preventDefault();  // Necessary to allow dropping
+  console.log("dragging over boss");
+});
+
 
 // Call resizeCanvas on window resize and initially
 window.addEventListener('resize', () => {
@@ -116,9 +137,18 @@ window.addEventListener('resize', () => {
 });
 resizeCanvas();
 
+
 let drawing = false;
 let lastX = 0;
 let lastY = 0;
 let scrollOffsetY = 0; // Tracks the virtual scroll offset
 const lines = [];
+
+let eraserMode = false;
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'e' || e.key === 'E') { // Check if the "E" key is pressed
+    eraserMode = !eraserMode; // Toggle eraser mode
+    console.log(`Eraser mode: ${eraserMode}`); // Optional: for debugging
+  }
+});
 
